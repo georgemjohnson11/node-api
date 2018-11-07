@@ -3,6 +3,11 @@ var {Bear, eventProcessors} = require('./app/models/bear');
 var BearEvent = require('./app/models/bearEvent');
 var uuid = require('uuid/v4');
 
+let processEvent = async function (baseModel, bearEvent) {
+    let updatedModel = await eventProcessors[bearEvent.type](baseModel, bearEvent);
+    return await new Bear(updatedModel).save();
+};
+
 exports.createBearsRoute = (router) => {
     // on routes that end in /bears
     // ----------------------------------------------------
@@ -23,8 +28,8 @@ exports.createBearsRoute = (router) => {
 
                     // let's write our first read cache model:
                     let newBear = {};
-                    newBear = await eventProcessors.create(newBear, bearEvent);
-                    const bear = await new Bear(newBear).save();
+                    const bear = await processEvent(newBear, bearEvent);
+
                     res.json(bear);
 
                 } catch (err) {
