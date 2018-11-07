@@ -40,13 +40,15 @@ exports.createBearsRoute = (router) => {
         )
 
         // get all the bears (accessed at GET http://localhost:8080/api/bears)
-        .get(function (req, res) {
-            Bear.find(function (err, bears) {
-                if (err)
-                    res.send(err);
+        .get(async (req, res) => {
+            try {
 
-                res.json(bears);
-            });
+                res.json(await Bear.find());
+
+            } catch (err) {
+                console.error("An error occurred getting a Bear", err);
+                return res.send(err);
+            }
         });
 
     // on routes that end in /bears/:bear_id
