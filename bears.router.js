@@ -55,12 +55,14 @@ exports.createBearsRoute = (router) => {
     // ----------------------------------------------------
     router.route('/bears/:bear_id')
         // get the bear with that id
-        .get(function (req, res) {
-            Bear.findById(req.params.bear_id, function (err, bear) {
-                if (err)
-                    res.send(err);
+        .get(async (req, res) => {
+            try {
+                let bear = await Bear.findById(req.params.bear_id);
                 res.json(bear);
-            });
+            } catch (err) {
+                console.error("An error occurred while reading that Bear", err);
+                res.send(err);
+            }
         })
 
         // update the bear with this id
