@@ -102,4 +102,31 @@ exports.createBearsRoute = (router) => {
             });
         });
 
+    router.route('/bears/:bear_id/refresh')
+        .post(async (req, res) => {
+            try {
+                const bearId = req.params.bear_id;
+
+                // get all the related Bear events
+                const events = await BearEvent.find({bearId}).sort({timestamp: 1});
+
+                // create a new Bear model to work with
+                let model = new Bear({bearId});
+                for (let event of events) {
+                    model = await eventProcessors[event.type](model, event.toJSON());
+                }
+                // Save the new model
+                await model.save();
+
+                // remove old models
+                await Bear.remove({bearId, _id: {$ne: model._id}});
+
+                // send response to the client
+                res.send(model);
+
+            } catch (err) {
+                console.error(`An error occurred while trying to refresh the bear ${req.params.bear_id}.`, err);
+                return res.send("An error occurred");
+            }
+        });
 };
