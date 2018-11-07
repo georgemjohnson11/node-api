@@ -15,11 +15,17 @@ app.use(morgan('dev')); // log requests to the console
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+
 var port     = process.env.PORT || 8080; // set our port
 
 // DATABASE SETUP
 var mongoose   = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/node-api'); // connect to our database
+
+// override Mongoose's default promise:
+// Use native promises
+mongoose.Promise = global.Promise;
+
 
 // Handle the connection event
 var db = mongoose.connection;

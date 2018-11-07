@@ -1,5 +1,7 @@
 // Bear models lives here
-var Bear     = require('./app/models/bear');
+var {Bear, eventProcessors} = require('./app/models/bear');
+var BearEvent = require('./app/models/bearEvent');
+var uuid = require('uuid/v4');
 
 exports.createBearsRoute = (router) => {
     // on routes that end in /bears
@@ -7,20 +9,30 @@ exports.createBearsRoute = (router) => {
     router.route('/bears')
 
         // create a bear (accessed at POST http://localhost:8080/bears)
-        .post(function (req, res) {
+        .post(async (req, res) => {
+                try {
+                    // create a new instance of the BearEvent model
+                    let bearEvent = new BearEvent({
+                        name: req.body.name,
+                        type: "create",
+                        bearId: uuid(),
+                        timestamp: new Date()
+                    });
 
-            var bear = new Bear(); // create a new instance of the Bear model
-            bear.name = req.body.name;  // set the bears name (comes from the request)
+                    await bearEvent.save();
 
-            bear.save(function (err) {
-                if (err)
+                    // let's write our first read cache model:
+                    let newBear = {};
+                    newBear = await eventProcessors.create(newBear, bearEvent);
+                    const bear = await new Bear(newBear).save();
+                    res.json(bear);
+
+                } catch (err) {
+                    console.error("An error occurred while trying to save the event. ", err);
                     res.send(err);
-
-                res.json({message: 'Bear created!'});
-            });
-
-
-        })
+                }
+            }
+        )
 
         // get all the bears (accessed at GET http://localhost:8080/api/bears)
         .get(function (req, res) {
