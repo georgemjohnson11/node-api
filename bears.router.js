@@ -1,6 +1,6 @@
 // Bear models lives here
 var {Bear, eventProcessors} = require('./app/models/bear');
-var BearEvent = require('./app/models/bearEvent');
+var {BearEvent, eventFactories} = require('./app/models/bearEvent');
 var uuid = require('uuid/v4');
 
 let processNewEvent = async function (baseModel, bearEvent) {
@@ -20,29 +20,23 @@ exports.createBearsRoute = (router) => {
 
         // create a bear (accessed at POST http://localhost:8080/bears)
         .post(async (req, res) => {
-                try {
-                    // create a new instance of the BearEvent model
-                    let bearEvent = new BearEvent({
-                        name: req.body.name,
-                        type: "create",
-                        bearId: uuid(),
-                        timestamp: new Date()
-                    });
+            try {
+                // create a new instance of the BearEvent model
+                let bearEvent = eventFactories.create(uuid(), req.body);
 
-                    await bearEvent.save();
+                await bearEvent.save();
 
-                    // let's write our first Read Cache Model:
-                    let newBear = {};
-                    const bear = await processNewEvent(newBear, bearEvent);
+                // let's write our first Read Cache Model:
+                let newBear = {};
+                const bear = await processNewEvent(newBear, bearEvent);
 
-                    res.json(bear);
+                res.json(bear);
 
-                } catch (err) {
-                    console.error("An error occurred while trying to save the event. ", err);
-                    res.send(err);
-                }
+            } catch (err) {
+                console.error("An error occurred while trying to save the event. ", err);
+                res.send(err);
             }
-        )
+        })
 
         // get all the bears (accessed at GET http://localhost:8080/api/bears)
         .get(async (req, res) => {
@@ -80,14 +74,8 @@ exports.createBearsRoute = (router) => {
                     return res.status(400).send("Please provide a bearId in your url")
                 }
 
-                // create a new instance of the BearEvent model
-                let bearEvent = new BearEvent({
-                    name: req.body.name,
-                    type: "update",
-                    bearId: bearId,
-                    timestamp: new Date()
-                });
-
+                // create a new instance of the BearEvent model using a factory
+                let bearEvent = eventFactories.update(bearId, req.body);
                 await bearEvent.save();
 
                 // let's update our Read Cache Model:
