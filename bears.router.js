@@ -3,11 +3,16 @@ var {Bear, eventProcessors} = require('./app/models/bear');
 var BearEvent = require('./app/models/bearEvent');
 var uuid = require('uuid/v4');
 
-let processEvent = async function (baseModel, bearEvent) {
+let processNewEvent = async function (baseModel, bearEvent) {
     let updatedModel = await eventProcessors[bearEvent.type](baseModel, bearEvent);
     return await new Bear(updatedModel).save();
 };
 
+let processUpdateEvent = async function (bearId, bearEvent) {
+    let currentBear = (await Bear.findOne({bearId: bearId})) || new Bear({bearId});
+    currentBear = await eventProcessors[bearEvent.type](currentBear, bearEvent);
+    return await currentBear.save();
+};
 exports.createBearsRoute = (router) => {
     // on routes that end in /bears
     // ----------------------------------------------------
@@ -26,9 +31,9 @@ exports.createBearsRoute = (router) => {
 
                     await bearEvent.save();
 
-                    // let's write our first read cache model:
+                    // let's write our first Read Cache Model:
                     let newBear = {};
-                    const bear = await processEvent(newBear, bearEvent);
+                    const bear = await processNewEvent(newBear, bearEvent);
 
                     res.json(bear);
 
@@ -66,21 +71,35 @@ exports.createBearsRoute = (router) => {
         })
 
         // update the bear with this id
-        .put(function (req, res) {
-            Bear.findById(req.params.bear_id, function (err, bear) {
+        .put(async (req, res) => {
+            try {
+                const bearId = req.params.bear_id;
 
-                if (err)
-                    res.send(err);
+                if (!bearId) {
+                    console.warn("no bearId given");
+                    return res.status(400).send("Please provide a bearId in your url")
+                }
 
-                bear.name = req.body.name;
-                bear.save(function (err) {
-                    if (err)
-                        res.send(err);
-
-                    res.json({message: 'Bear updated!'});
+                // create a new instance of the BearEvent model
+                let bearEvent = new BearEvent({
+                    name: req.body.name,
+                    type: "update",
+                    bearId: bearId,
+                    timestamp: new Date()
                 });
 
-            });
+                await bearEvent.save();
+
+                // let's update our Read Cache Model:
+                let currentBear = await processUpdateEvent(bearId, bearEvent);
+
+                res.json(currentBear);
+
+            } catch (err) {
+                console.error("An error occurred while trying to save the event. ", err);
+                res.send(err);
+            }
+
         })
 
         // delete the bear with this id

@@ -7,12 +7,19 @@ const BearSchema = new Schema({
     timestamp: String
 });
 
+BearSchema.index({bearId: 1});
+
 module.exports.Bear = mongoose.model('Bear', BearSchema);
 
 
 const eventProcessors = {
     create: async (model, event) => {
         model.bearId = event.bearId;
+        model.name = event.name;
+        model.timestamp = event.timestamp;
+        return model;
+    },
+    update: async (model, event) => {
         model.name = event.name;
         model.timestamp = event.timestamp;
         return model;
