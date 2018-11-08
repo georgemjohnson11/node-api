@@ -5,6 +5,12 @@ const BearSchema = new Schema({
     bearId: String,
     name: String,
     timestamp: String
+}, {
+    toJSON: {
+        transform: (doc, ret) => {
+            delete ret._id;
+        }
+    }
 });
 
 BearSchema.index({bearId: 1});
