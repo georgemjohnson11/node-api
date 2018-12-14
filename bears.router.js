@@ -56,7 +56,7 @@ exports.createBearsRoute = (router) => {
         // get the bear with that id
         .get(async (req, res) => {
             try {
-                let bear = await Bear.findById(req.params.bear_id);
+                let bear = await Bear.findOne({bearId: req.params.bear_id});
                 res.json(bear);
             } catch (err) {
                 console.error("An error occurred while reading that Bear", err);
