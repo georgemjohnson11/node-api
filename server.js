@@ -17,8 +17,8 @@ app.use(bodyParser.json());
 
 
 var port     = process.env.PORT || 8080; // set our port
-
-// DATABASE SETUP
+/*
+// Mongo DB DATABASE SETUP
 var mongoose   = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/node-api'); // connect to our database
 
@@ -34,6 +34,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log("DB connection alive");
 });
+*/
 
 
 // ROUTES FOR OUR API
@@ -51,7 +52,7 @@ router.use(function(req, res, next) {
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function(req, res) {
-	res.json({ message: 'hooray! welcome to our api!' });	
+	res.sendFile("index.html");	
 });
 
 
