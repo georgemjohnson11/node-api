@@ -1,0 +1,15 @@
+version: "2"
+services:
+  app:
+    container_name: app
+    restart: always
+    build: .
+    ports:
+      - "4000:4000"
+    links:
+      - ravendb
+  ravendb:
+    container_name: ravendb
+    image: ravendb/ravendb
+    ports:
+      - "8080:8080"
